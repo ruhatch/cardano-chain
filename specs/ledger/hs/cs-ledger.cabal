@@ -63,3 +63,13 @@ library ledger-witnessed
                      , utxo-impl-simple
                      , ledger-simple
   mixins:              ledger-simple (Ledger as Ledger.Simple)
+
+library ledger-delegation
+  hs-source-dirs:      src/delegation
+  exposed-modules:     Delegation
+  default-language:    Haskell2010
+  build-depends:       base >=4.12 && <5
+                     , containers
+                     , lens
+                     , small-steps
+
