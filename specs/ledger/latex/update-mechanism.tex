@@ -841,7 +841,7 @@ blocks. Some clarifications are in order:
         (\var{pv_c}, \var{pps_c}) & \ProtVer \times \PPMMap
         & \text{candidate protocol}\\
         \var{bvs} & \powerset{(\ProtVer \times \VKeyGen)}
-        & \text{keys ready to adopt versions}
+        & \text{endorsement-key pairs}
       \end{array}\right)
   \end{align*}
   %
@@ -859,10 +859,12 @@ Rules in \cref{fig:rules:up-bv-reg} specify what happens when a block issuer
 signals that it is ready to upgrade to a new protocol version, given in the
 rule by $\var{bv}$:
 \begin{itemize}
-\item The set $\var{bvs}$ that contains which genesis keys are ready to adopt
-  a given protocol version is updated to reflect that all the delegators of the
+\item The set $\var{bvs}$, containing which genesis keys are ready to adopt a
+  given protocol version, is updated to reflect that all the delegators of the
   block issuer (identified by its verifying key, $\var{vk}$) are ready to
-  upgrade to $\var{bv}$.
+  upgrade to $\var{bv}$. Given a pair $(\var{pv}, ~\var{vk_s}) \in \var{bvs}$,
+  we say that (the owner of) key $\var{vk_s}$ endorses the (proposed) protocol
+  version $\var{pv}$.
 \item If the candidate protocol version $\var{bv}$ is greater than the current
   candidate version $\var{pv_c}$, and there is a significant number of blocks
   signed with that version (condition formalized in

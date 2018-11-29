@@ -190,7 +190,7 @@
         \var{cps} & \UPropId \mapsto \BkNr & \text{confirmed proposals}\\
         \var{vts} & \powerset{(\UPropId \times \VKeyGen)} & \text{proposals votes}\\
         \var{bvs} & \powerset{(\ProtVer \times \VKeyGen)}
-                           & \text{keys ready to adopt versions}\\
+                           & \text{endorsement-key pairs}\\
         \var{pws} & \UPropId \mapsto \BkNr & \text{proposal timestamps}
       \end{array}\right)
   \end{align*}
@@ -387,7 +387,7 @@ are removed from the parts of the state that hold:
 \begin{itemize}
 \item the registered proposals,
 \item the votes associated with the proposals,
-\item the set of key-endorsement pairs, and
+\item the set of endorsement-key pairs, and
 \item the block number in which proposals where added.
 \end{itemize}
 The epoch-key pairs set ($\var{eps}$) that represents which stakeholder
@@ -401,7 +401,7 @@ confirmed proposals ($\var{cps}$) either when it is adopted or when a protocol
 version higher than that of $\var{up}$ gets adopted (see
 Rule~\ref{eq:rule:upi-ec}).
 %
-The set of key-endorsement pairs is cleaned here as well as in the epoch change
+The set of endorsement-key pairs is cleaned here as well as in the epoch change
 rule (Rule~\ref{eq:rule:upi-ec}). The reason for this is that this set grows at
 each block, and it can get considerably large if no proposal gets adopted at
 the end on an epoch.
