@@ -797,10 +797,10 @@ The rules in Figure~\ref{fig:rules:up-vote-reg} model the registration of a vote
 
 \clearpage
 
-\subsection{Block protocol version registration}
-\label{sec:block-protocol-version-reg}
+\subsection{Update-proposal endorsement}
+\label{sec:proposal-endorsement}
 
-Figure~\ref{fig:ts-types:up-bv-reg} shows the types of the transition system
+Figure~\ref{fig:ts-types:up-end} shows the types of the transition system
 associated with the registration of candidate protocol versions present in
 blocks. Some clarifications are in order:
 \begin{itemize}
@@ -813,11 +813,11 @@ blocks. Some clarifications are in order:
   width.
 \item For the sake of conciseness, we omit the types associated to the
   transitions $\trans{addbvvk}{}$, since they can be inferred from the types of
-  the $\trans{upbvreg}{}$ transitions.
+  the $\trans{upend}{}$ transitions.
 \end{itemize}
 
 \begin{figure}[htb]
-  \emph{Block protocol version registration environments}
+  \emph{Update-proposal endorsement environments}
   \begin{align*}
     & \BVREnv
       = \left(
@@ -833,7 +833,7 @@ blocks. Some clarifications are in order:
       \end{array}\right)
   \end{align*}
   %
-  \emph{Block protocol version registration states}
+  \emph{Update-proposal endorsement states}
   \begin{align*}
     & \BVRState
       = \left(
@@ -845,17 +845,17 @@ blocks. Some clarifications are in order:
       \end{array}\right)
   \end{align*}
   %
-  \emph{Block protocol version registration transitions}
+  \emph{Update-proposal endorsement transitions}
     \begin{equation*}
-    \_ \vdash \_ \trans{upbvreg}{\_} \_ \in
+    \_ \vdash \_ \trans{upend}{\_} \_ \in
     \powerset (\BVREnv \times \BVRState
     \times (\ProtVer \times \VKey) \times \BVRState)
     \end{equation*}
-  \caption{Vote registration transition-system types}
-  \label{fig:ts-types:up-bv-reg}
+  \caption{Update-proposal endorsement transition-system types}
+  \label{fig:ts-types:up-end}
 \end{figure}
 
-Rules in \cref{fig:rules:up-bv-reg} specify what happens when a block issuer
+Rules in \cref{fig:rules:up-end} specify what happens when a block issuer
 signals that it is ready to upgrade to a new protocol version, given in the
 rule by $\var{bv}$:
 \begin{itemize}
@@ -972,7 +972,7 @@ rule by $\var{bv}$:
           \end{array}
         \right)
       }
-      \trans{upbvreg}{(\var{bv}, \var{vk})}
+      \trans{upend}{(\var{bv}, \var{vk})}
       {
         \left(
           \begin{array}{l}
@@ -1037,7 +1037,7 @@ rule by $\var{bv}$:
           \end{array}
         \right)
       }
-      \trans{upbvreg}{(\var{bv}, \var{vk})}
+      \trans{upend}{(\var{bv}, \var{vk})}
       {
         \left(
           \begin{array}{l}
@@ -1103,7 +1103,7 @@ rule by $\var{bv}$:
           \end{array}
         \right)
       }
-      \trans{upbvreg}{(\var{bv}, \var{vk})}
+      \trans{upend}{(\var{bv}, \var{vk})}
       {
         \left(
           \begin{array}{l}
@@ -1114,8 +1114,8 @@ rule by $\var{bv}$:
       }
     }
   \end{equation}
-  \caption{Block protocol version registration rules}
-  \label{fig:rules:up-bv-reg}
+  \caption{Update-proposal endorsement rules}
+  \label{fig:rules:up-end}
 \end{figure}
 
 \clearpage
