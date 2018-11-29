@@ -1193,17 +1193,6 @@ In this specification we only make use of a minimum adoption threshold,
 represented by the protocol parameter $\var{upAdptThd}$ until it becomes clear
 why a dynamic alternative is needed.
 
-\subsubsection{No voting deadlines}
-\label{sec:no-voting-deadlines}
-
-The update proposals have a time-to-live, formalized using the parameter $u$ in
-Figure~\ref{fig:ts-types:upi}. This is the total time a proposal has to enter
-the system and become adopted. Proposals that exceeded this time to live are
-removed from the ledger state. This cleanup takes place at a single place in
-the rules, which simplifies reasoning about the ledger-state size bounds. By
-having a voting deadline, we would still need a time-to-live for confirmed
-proposals that were not adopted, which requires additional logic.
-
 \subsubsection{No checks on unlock-stake-epoch parameter}
 \label{sec:no-unlock-stake-epoch-check}
 
