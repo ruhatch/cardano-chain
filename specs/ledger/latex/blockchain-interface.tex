@@ -382,24 +382,29 @@
 
 The interface rule for protocol-block-version registration makes use of the
 $\trans{upbvreg}{}$ transition, passing only the portion of the state relevant
-to it. In addition, the proposals that are older than $u$ blocks are removed
-from the parts of the state that hold:
+to it. In addition, the unconfirmed proposals that are older than $u$ blocks
+are removed from the parts of the state that hold:
 \begin{itemize}
 \item the registered proposals,
-\item the confirmed proposals,
 \item the votes associated with the proposals,
-\item the set of keys ready to adopt the different proposals, and
+\item the set of key-endorsement pairs, and
 \item the block number in which proposals where added.
 \end{itemize}
-Note that a proposal that got adopted could be cleaned earlier in some other
-rule, however, by keeping all the cleanup logic associated to block number
-change in one place we make reasoning about state-size bounds simpler. The
-epoch-key pairs set ($\var{eps}$) that represents which stakeholder proposed an
-update in which epoch, is cleaned up in the rules given in
-\cref{fig:rules:upi-ec}, which deals with epoch change. Finally, in
-$\var{vs_{keep}}$ we compute the set of all the versions associated with
-proposals id's to be kept, and restrict the domain of $\var{bvs}$ to these
-versions.
+The epoch-key pairs set ($\var{eps}$) that represents which stakeholder
+proposed an update in which epoch, is cleaned up in the rules given in
+\cref{fig:rules:upi-ec}, which deals with epoch change.
+
+In Rule~\ref{eq:rule:upi-bv-reg}, the set of proposal id's $\var{pid_{keep}}$
+contains only those proposals that haven't expired yet or that are confirmed.
+Once a proposal $\var{up}$ is confirmed, it is removed from the set of
+confirmed proposals ($\var{cps}$) either when it is adopted or when a protocol
+version higher than that of $\var{up}$ gets adopted (see
+Rule~\ref{eq:rule:upi-ec}).
+%
+The set of key-endorsement pairs is cleaned here as well as in the epoch change
+rule (Rule~\ref{eq:rule:upi-ec}). The reason for this is that this set grows at
+each block, and it can get considerably large if no proposal gets adopted at
+the end on an epoch.
 
 
 \begin{figure}[htb]
@@ -435,8 +440,13 @@ versions.
           \end{array}
         \right)
       }\\
-      \var{pids_{keep}} = \dom~(pws \restrictrange [b_n - u, ..])
-      & \var{vs_{keep}} = \dom~(\range~(\var{pids_{keep}} \restrictdom \var{rups}))
+      {
+        \begin{array}{r@{~=~}l}
+          \var{pids_{keep}} & \dom~(pws \restrictrange [b_n - u, ..]) \cup \dom~\var{cps}\\
+          \var{vs_{keep}} & \dom~(\range~\var{rups'})\\
+          \var{rups'} & \var{pids_{keep}} \restrictdom \var{rups}
+        \end{array}
+      }
     }
     {
       {
@@ -471,9 +481,9 @@ versions.
             \var{e_p}\\
             (\var{pv}, \var{pps})\\
             (\var{pv_c'}, \var{pps_c'})\\
-            \var{pids_{keep}} \restrictdom \var{rups}\\
+            \var{rups'}\\
             \var{eps}\\
-            \var{pids_{keep}} \restrictdom \var{cps}\\
+            \var{cps}\\
             \var{pids_{keep}} \restrictdom \var{vts}\\
             \var{vs_{keep}}  \restrictdom \var{bvs}\\
             \var{pids_{keep}} \restrictdom \var{pws}
