@@ -873,10 +873,16 @@ rule by $\var{bv}$:
   current protocol version $\var{pv}$. If this rule is used in an initial state
   in which $\var{pv} \leq \var{pv_c}$, then this invariant is maintained by
   these rules.
-\item The protocol version $\var{bv}$ must refer to a registered update
+\item Endorsed protocol version $\var{bv}$ must refer to a registered update
   proposal (which are contained in $\var{rups}$), and this update proposal must
   have been confirmed at least $k$ blocks ago, to ensure stability of the
-  confirmation.
+  confirmation. Note that this rule does not guarantee that a confirmed
+  proposal will have $k$ blocks (or $2k$ blocks) before the end of the epoch
+  where nodes can endorse this version. In such case, the proposal can only be
+  adopted in the next epoch. Figure~\ref{fig:proposal-confirmed-too-late} shows
+  an example of a proposal being confirmed too late in an epoch, where it is
+  not possible to get the enough endorsements in the remaining window. In this
+  Figure we take $k = 2$.
 \end{itemize}
 
 \begin{equation}
@@ -1118,6 +1124,79 @@ rule by $\var{bv}$:
   \label{fig:rules:up-end}
 \end{figure}
 
+
+\begin{figure}[htb]
+  \centering
+  \begin{tikzpicture}
+    %%
+    %% Macros used in this picture
+    %%
+    %
+    % Number of slots
+    \pgfmathsetmacro{\nrSlots}{11}
+    % Slot in which the proposal gets confirmed
+    \pgfmathsetmacro{\cSlot}{1}
+    % Our special K.
+    \pgfmathsetmacro{\K}{2}
+    % Epoch end.
+    \pgfmathsetmacro{\eend}{7}
+
+    % Draw the horizontal line
+    \draw[thick, -Triangle] (0,0) -- (\nrSlots,0) node[font=\scriptsize,below left=3pt and -8pt]{slots};
+
+    % % draw vertical lines
+    \foreach \x in {0,1,...,10}
+    \draw (\x cm, 3pt) -- (\x cm, -3pt);
+
+    % Add a label to with the block number in which the proposal got confirmed.
+    \node at (\cSlot, -.7) {$b_j$};
+
+    % Update in cps
+    \node at (\cSlot, -1.5) {$\var{cps'} = \var{cps} \cup \{ \var{pid} \mapsto b_j \}$};
+
+    % The no-endorsements red bar.
+    \draw[red, line width=4pt] (\cSlot, .5) -- +(2*\K, 0);
+
+    % Brace above the no-endorsement window bar.
+    \draw[thick, red, decorate, decoration={brace, amplitude=5pt}]
+    (\cSlot, .7) -- +(2*\K, 0)
+    node[black!20!red, midway, above=4pt, font=\scriptsize] {No-endorsements possible};
+
+    % The endorsements window.
+    \coordinate (ewStart) at (\cSlot + 2*\K, .5);
+    \coordinate (ewEnd) at ($(\eend, .5)$);
+    \draw[green, line width=4pt]
+    (ewStart) -- (ewEnd);
+
+    % Brace above the endorsements window
+    \coordinate (ewStartB) at ($(ewStart) + (0, 0.2)$);
+    \coordinate (ewEndB) at ($(ewEnd) + (0, 0.2)$);
+    \draw[thick, green, decorate, decoration={brace, amplitude=5pt}]
+    (ewStartB) -- (ewEndB)
+    node[black!50!green, midway, above=15pt, font=\scriptsize] {Endorsements window};
+
+    % The 2k before end-of-epoch window.
+    \coordinate (beeStart) at (\eend - 2*\K, -.5);
+    \coordinate (beeEnd) at ($(\eend, -.5)$);
+    \draw[blue, line width=4pt]
+    (beeStart) -- (beeEnd);
+
+    % Brace on above the 2k before end-of-epoch window.
+    \coordinate (beeStartB) at ($(beeStart) - (0, 0.2)$);
+    \coordinate (beeEndB) at ($(beeEnd) - (0, 0.2)$);
+    \draw[thick, blue, decorate, decoration={brace, amplitude=5pt}]
+    (beeEndB) -- (beeStartB)
+    node[black!20!blue, midway, below=5pt, font=\scriptsize] {$2k$ slots before epoch ends};
+
+    \draw[blue, line width=2pt] (\eend, 3pt) -- (\eend, -3pt);
+
+    \draw[->] (\eend, -4pt) -- +(1, -1)
+    node[right, blue, font=\scriptsize] {End of epoch};
+  \end{tikzpicture}
+  \caption{A proposal confirmed too late}
+  \label{fig:proposal-confirmed-too-late}
+\end{figure}
+
 \clearpage
 
 \subsection{Deviations from the actual implementation}
@@ -1230,3 +1309,13 @@ In Figure~\ref{fig:defs:update-proposals} the types $\type{SWVer}$,
 $\type{UpdData}$, and $\type{UpdAttr}$ are only needed to model the fact that
 an update proposal must sign such data, however, we do not use them for any
 other purpose in this formalization.
+
+\subsection{Questions}
+\label{sec:up-questions}
+
+This temporary section contains unanswered questions about the formalization of
+update mechanism:
+
+\begin{itemize}
+\item Do we need to model the $\var{scriptVersion}$?
+\end{itemize}
