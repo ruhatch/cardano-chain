@@ -503,12 +503,18 @@ are changed depending on the epoch in the signal ($e_n$ in this case). A change
 only occurs if the new epoch is greater than the previously seen epoch ($e_p$).
 In such case, the current epoch is also updated accordingly. The candidate
 versions and parameters map $(\var{pv_c}, \var{pps_c})$ remain constant in this
-transition, even if they become adopted. Finally, the set $\var{eps}$ is
-updated so that only keys that proposed in epochs no earlier than $e_n$ are
-kept. Finally, note that we use $\var{pps} \unionoverride \var{pps'}$ in the
-final state, since the candidate proposal might only update some parameters of
-the protocol: by using union override $\var{pps'}$ overwrites the values of the
-parameters in $\var{pps}$.
+transition, even if they become adopted. Note that, in the final state, we use
+union override to define the updated parameters
+($\var{pps} \unionoverride \var{pps'}$). This is because candidate proposal
+might only update some parameters of the protocol.
+
+Rule~\ref{eq:rule:upi-ec} performs cleanup of several state variables. We keep
+only the information of proposals whose proposed protocol-versions are greater
+than the newly adopted protocol version ($\var{pv'}$). This means that active
+proposals will be discarded even if the voting period is not over (it makes no
+sense to vote on a proposal that proposes to upgrade to an older version of the
+protocol). Furthermore, the set $\var{eps}$ is updated so that only keys that
+proposed in epochs no earlier than $e_n$ are kept.
 
 \begin{figure}[htb]
   \begin{equation}
@@ -591,7 +597,10 @@ parameters in $\var{pps}$.
             \var{(\var{pv'}, \var{pps'})}\\
           \end{array}
         \right)
-      }
+      }\\ ~ \\
+      \var{pids_{keep}} = \{ \var{pid} \mid
+      \var{pid} \mapsto (\var{pv_i}, \wcard) \in \var{rups}
+      ,~ \var{pv'} \leq \var{pv_i}\}
     }
     {
       {
@@ -626,12 +635,12 @@ parameters in $\var{pps}$.
             \var{e'}\\
             \var{(\var{pv'}, \var{pps} \unionoverride \var{pps'})}\\
             \var{(\var{pv_c}, \var{pps_c})}\\
-            \var{rups}\\
+            \var{pids_{keep}} \restrictdom \var{rups}\\
             {[e_n, ..]} \restrictdom \var{eps}\\
-            \var{cps}\\
-            \var{vts}\\
-            \var{bvs}\\
-            \var{pws}
+            \var{pids_{keep}} \restrictdom \var{cps}\\
+            \var{pids_{keep}} \restrictdom \var{vts}\\
+            {[\var{pv'}, ..]} \restrictdom \var{bvs}\\
+            \var{pids_{keep}} \restrictdom \var{pws}
           \end{array}
         \right)
       }
