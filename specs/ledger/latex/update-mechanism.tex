@@ -17,6 +17,8 @@
 \newcommand{\BVREnv}{\ensuremath{\type{BVREnv}}}
 \newcommand{\BVRState}{\ensuremath{\type{BVRState}}}
 \newcommand{\BkNr}{\ensuremath{\type{BkNr}}}
+\newcommand{\ApName}{\ensuremath{\type{ApName}}}
+\newcommand{\SWVer}{\ensuremath{\type{SWVer}}}
 
 \newcommand{\upSize}[1]{\ensuremath{\fun{upSize}~\var{#1}}}
 \newcommand{\upPV}[1]{\ensuremath{\fun{upPV}~\var{#1}}}
@@ -25,6 +27,7 @@
 \newcommand{\upSigData}[1]{\ensuremath{\fun{upSigData}~\var{#1}}}
 \newcommand{\upIssuer}[1]{\ensuremath{\fun{upIssuer}~\var{#1}}}
 \newcommand{\upParams}[1]{\ensuremath{\fun{upParams}~\var{#1}}}
+\newcommand{\upSwVer}[1]{\ensuremath{\fun{upSwVer}~\var{#1}}}
 \newcommand{\vCaster}[1]{\ensuremath{\fun{vCaster}~\var{#1}}}
 \newcommand{\vPropId}[1]{\ensuremath{\fun{vPropId}~\var{#1}}}
 \newcommand{\vSig}[1]{\ensuremath{\fun{vSig}~\var{#1}}}
@@ -74,9 +77,9 @@ this specification can be extended to incorporate the research results.
     \begin{array}{r@{~\in~}lr}
       \var{up} & \UProp & \text{(protocol) update proposal}\\
       \var{p} & \ProtPm & \text{protocol parameters}\\
-      \var{swv} & \type{SWVer} & \text{update software version}\\
       \var{upd} & \type{UpdData} & \text{update data}\\
       \var{upa} & \type{UpdAttr} & \text{update attributes}\\
+      \var{an} & \ApName & \text{application name}
     \end{array}
   \end{equation*}
   %
@@ -87,6 +90,9 @@ this specification can be extended to incorporate the research results.
       & (\mathbb{N}, \mathbb{N}, \mathbb{N}) & \text{protocol version}\\
       \var{pps} & \PPMMap & \var{pps} & \ProtPm \mapsto \Value
                                              & \text{protocol parameters map}\\
+      \var{swv} & \SWVer
+      & (\var{an}, \var{av}) & \ApName \times \mathbb{N}
+      & \text{software version}\\
       \var{pb} & \UPropSD
       &
         {\left(\begin{array}{r l}
@@ -120,8 +126,9 @@ this specification can be extended to incorporate the research results.
       \fun{upId} & \UProp \to \UPropId & \text{update proposal id}\\
       \fun{upParams} & \UProp \to \mathbb{\PPMMap}
                                            & \text{new parameters that are proposed}\\
+      \fun{upSwVer} & \UProp \to \SWVer & \text{software version-update proposal}\\
       \fun{upSig} & \UProp \to \Sig & \text{update proposal signature}\\
-      \fun{upSigdata} & \UProp \to \UPropSD & \text{update proposal signed data}
+      \fun{upSigdata} & \UProp \to \UPropSD & \text{update proposal signed data}\\
     \end{array}
   \end{equation*}
   \caption{Update proposals definitions}
@@ -215,15 +222,19 @@ In Rule~\ref{eq:rule:up-validity} we see that a new proposal:
     implies that a proposal is uniquely determined by the protocol version it
     proposes.
   \end{itemize}
+\item must increase the software version by at most one (see
+  \cref{eq:func:av-can-follow}).
+\item must not contain a software update proposal that was already registered
+  (in $\var{raups}$).
 \item the protocol version and parameters, along with some other data (see the
   definition of $\fun{upSigdata}$), must be signed by the proposal issuer.
 \end{itemize}
 
 \begin{figure}[htb]
   \begin{equation}
-    \label{eq:func:can-follow}
+    \label{eq:func:pv-can-follow}
     \begin{array}{r c l}
-      \fun{canFollow}~(\var{mj_n}, \var{mi_n}, \var{a_n})~(\var{mj_p}, \var{mi_p}, \var{a_p})
+      \fun{pvCanFollow}~(\var{mj_n}, \var{mi_n}, \var{a_n})~(\var{mj_p}, \var{mi_p}, \var{a_p})
       & = & (\var{mj_p}, \var{mi_p}, \var{a_p}) < (\var{mj_n}, \var{mi_n}, \var{a_n})\\
       & \wedge & 0 \leq \var{mj_n} - \var{mj_p} \leq 1\\
       & \wedge & (\var{mj_p} = \var{mj_n} \Rightarrow \var{mi_p} + 1 = \var{mi_n}))\\
@@ -249,11 +260,21 @@ In Rule~\ref{eq:rule:up-validity} we see that a new proposal:
   \end{equation}
   \nextdef
   \begin{equation}
-    \label{eq:func:is-new}
+    \label{eq:func:pv-is-new}
     \begin{array}{r c l}
-      \fun{isNew}~\var{rups}~(\var{pid}, \var{nv})
+      \fun{pvIsNew}~\var{rups}~(\var{pid}, \var{nv})
       & = &  \var{pid} \notin \dom \var{rups}
-            \wedge \var{nv} \notin \dom (\range \var{rups})\\
+            \wedge \var{nv} \notin \dom (\range \var{rups})
+    \end{array}
+  \end{equation}
+  \nextdef
+  \begin{equation}
+    \label{eq:func:av-can-follow}
+    \begin{array}{r c l}
+      \fun{avCanFollow}~\var{avs}~(\var{an}, \var{av}) & =
+      & (\var{an} \mapsto (\var{av_c}, \wcard) \in \var{avs}
+        \Rightarrow 0 \leq \var{av} - \var{av_c} \leq 1)\\
+      & \vee & (\var{an} \notin \dom~\var{avs} \Rightarrow \var{av} = 0)
     \end{array}
   \end{equation}
   \caption{Update validity functions}
@@ -261,17 +282,49 @@ In Rule~\ref{eq:rule:up-validity} we see that a new proposal:
 
 \begin{figure}[htb]
   \begin{equation}
-    \label{eq:rule:up-validity}
+    \label{eq:rule:up-av-validity}
+    \inference
+    {
+      (\var{an}, \var{av}) = \upSwVer{up}
+      & \fun{avCanFollow}~\var{avs}~(\var{an}, \var{av})
+      & (\var{an}, \var{av}) \notin \range~\var{raus}
+    }
+    {
+      {
+        \begin{array}{l}
+          \var{avs}
+        \end{array}
+      }
+      \vdash
+      {
+        \left(
+          \begin{array}{l}
+            \var{raus}
+          \end{array}
+        \right)
+      }
+      \trans{upsvv}{up}
+      {
+        \left(
+          \begin{array}{l}
+            \var{raus} \unionoverride \{ \upId{up} \mapsto (\var{an}, \var{av})\}
+          \end{array}
+        \right)
+      }
+    }
+  \end{equation}
+  \nextdef
+    \begin{equation}
+    \label{eq:rule:up-pv-validity}
     \inference
     {
       \var{vk} = \upIssuer{up}
       & \var{pid} = \upId{up}
       & \var{nv} = \upPV{up}
       & \var{pps_n} = \upParams{up}\\
-      & \fun{canFollow}~\var{nv}~\var{pv}
+      & \fun{pvCanFollow}~\var{nv}~\var{pv}
       & \fun{canUpdate}~\var{pps}~\var{up}
-      & \fun{isNew}~\var{rups}~(\var{pid}, \var{nv})\\
-      \mathcal{V}_{\var{vk}}\serialised{\upSigData{up}}_{(\upSig{up})}
+      & \fun{pvIsNew}~\var{rups}~(\var{pid}, \var{nv})
     }
     {
       {
@@ -288,11 +341,91 @@ In Rule~\ref{eq:rule:up-validity} we see that a new proposal:
           \end{array}
         \right)
       }
-      \trans{upv}{\var{up}}
+      \trans{uppvv}{\var{up}}
       {
         \left(
           \begin{array}{l}
             \var{rups} \unionoverride \{ \var{pid} \mapsto (\var{nv}, \var{pps_n}) \}
+          \end{array}
+        \right)
+      }
+    }
+  \end{equation}
+  \nextdef
+  \begin{equation}
+    \label{eq:rule:up-validity}
+    \inference
+    {
+      {
+        \begin{array}{l}
+          \var{pv}\\
+          \var{pps}
+        \end{array}
+      }
+      \vdash
+      {
+        \left(
+          \begin{array}{l}
+            \var{rups}
+          \end{array}
+        \right)
+      }
+      \trans{uppvv}{\var{up}}
+      {
+        \left(
+          \begin{array}{l}
+            \var{rups'}
+          \end{array}
+        \right)
+      }
+      &
+      {
+        \begin{array}{l}
+          \var{avs}
+        \end{array}
+      }
+      \vdash
+      {
+        \left(
+          \begin{array}{l}
+            \var{raus}
+          \end{array}
+        \right)
+      }
+      \trans{upsvv}{up}
+      {
+        \left(
+          \begin{array}{l}
+            \var{raus'}
+          \end{array}
+        \right)
+      }
+      \\
+      \mathcal{V}_{\var{vk}}\serialised{\upSigData{up}}_{(\upSig{up})}
+    }
+    {
+      {
+        \begin{array}{l}
+          \var{pv}\\
+          \var{pps}\\
+          \var{avs}
+        \end{array}
+      }
+      \vdash
+      {
+        \left(
+          \begin{array}{l}
+            \var{rups}\\
+            \var{raus}
+          \end{array}
+        \right)
+      }
+      \trans{upv}{\var{up}}
+      {
+        \left(
+          \begin{array}{l}
+            \var{rups'}\\
+            \var{raus'}
           \end{array}
         \right)
       }
@@ -1305,7 +1438,7 @@ cares about the mechanisms by which the protocol parameters are changed.
 
 \subsubsection{Ignored attributes of proposals}
 
-In Figure~\ref{fig:defs:update-proposals} the types $\type{SWVer}$,
+In Figure~\ref{fig:defs:update-proposals} the types
 $\type{UpdData}$, and $\type{UpdAttr}$ are only needed to model the fact that
 an update proposal must sign such data, however, we do not use them for any
 other purpose in this formalization.
