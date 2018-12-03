@@ -417,6 +417,52 @@ updated.
   \label{fig:rules:upi-vote}
 \end{figure}
 
+Figure~\ref{fig:st-diagram-sw-up} shows the different states in which a
+software proposal update might be: if valid, a software update proposal becomes
+active whenever it is included in a block. If the update proposal gets enough
+votes, then the corresponding software update proposal becomes confirmed, and
+the ledger state reflects this. If the voting period ends without an update
+proposal being confirmed, then the corresponding software update proposal gets
+rejected.
+%
+Protocol updates on the other hand, involve a slightly different logic, and the
+state transition diagram for these kind of updates is shown in
+Figure~\ref{fig:st-diagram-pt-up}.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[ align = center
+                     , node distance = 6em and 10em
+                     , text width = 5em
+                     , font = \footnotesize
+                     , >={Latex[width=0.5em, length=0.5em]}
+                     , every node/.style = { rectangle
+                                         , rounded corners
+                                         , draw = black
+                                         , align = center
+                                         , minimum height = 4em }
+                     ]
+
+  \node (active) [fill = blue!10] {Active};
+  \node (rejected) [below = of active, fill = red!10] {Rejected};
+  \node (confirmed) [right = of active, fill = green!10] {Confirmed};
+
+  \tikzset{every node/.style={align=center, text width=7em, text=brown}}
+
+  \draw[->] (active)
+  edge node [above] {Update proposal gets enough votes}
+  (confirmed);
+
+  \draw[->] (active)
+  edge node [left] {Voting period \\ends}
+  (rejected);
+
+  \end{tikzpicture}
+
+  \caption{State-transition diagram for software-updates}
+  \label{fig:st-diagram-sw-up}
+\end{figure}
+
 \clearpage
 
 The interface rule for protocol-block-version registration makes use of the
@@ -699,4 +745,52 @@ Rule~\ref{eq:rule:upi-ec} performs cleanup of several state variables:
   \end{equation}
   \caption{Block version adoption on epoch change rules}
   \label{fig:rules:upi-ec}
+\end{figure}
+
+Figure~\ref{fig:st-diagram-pt-up} shows the different states a protocol-update
+proposal can be in, and what causes the transitions between them.
+
+\begin{figure}[ht]
+  \centering
+  \begin{tikzpicture}[ align = center
+                     , node distance = 8em and 16em
+                     , text width = 5em
+                     , font = \footnotesize
+                     , >={Latex[width=0.5em, length=0.5em]}
+                     , every node/.style = { rectangle
+                                         , rounded corners
+                                         , draw = black
+                                         , align = center
+                                         , minimum height = 4em }
+                     ]
+
+  \node (active) [fill = blue!10] {Active};
+  \node (rejected) [below = of active, fill = red!10] {Rejected};
+  \node (confirmed) [right = of active, fill = green!10] {Confirmed};
+  \node (adopted) [below = of confirmed, fill = green!30] {Adopted};
+
+  \tikzset{every node/.style={align=center, text width=7em, text=brown}}
+
+  \draw[->] (active)
+  edge node [above] {Update proposal gets enough votes}
+  (confirmed);
+
+  \draw[->] (active)
+  edge node [left] {Voting period \\ends}
+  (rejected);
+
+  \draw[->] (confirmed)
+  edge node [above left]
+  {Proposal with higher version adopted}
+  (rejected);
+
+  \draw[->] (confirmed)
+  edge node [right]
+  {Proposal gets enough endorsements}
+  (adopted);
+
+  \end{tikzpicture}
+
+  \caption{State-transition diagram for protocol-updates}
+  \label{fig:st-diagram-pt-up}
 \end{figure}
