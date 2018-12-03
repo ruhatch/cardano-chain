@@ -140,6 +140,7 @@ correspond with fields of the current `BlockVersionData` structure:
 \begin{itemize}
 \item Slot duration: $\var{slotDuration}$
 \item Maximum block size: $\var{maxBlockSize}$
+\item Maximum transaction size: $\var{maxTxSize}$
 \item Maximum header size: $\var{maxHeaderSize}$
 \item Maximum transaction size: $\var{maxTxSize}$
 \item Maximum proposal size: $\var{maxProposalSize}$
@@ -214,8 +215,13 @@ In Rule~\ref{eq:rule:up-validity} we see that a new proposal:
   \begin{itemize}
   \item the proposal size must not exceed the maximum size specified by
     the current protocol parameters,
-  \item the proposed new maximum block should be not greater than twice current
-    maximum block size, and
+  \item the proposed new maximum block size should be not greater than twice
+    current maximum block size,
+  \item the maximum transaction size must be smaller than the maximum block
+    size (this requirement is \textbf{crucial} for having every transaction
+    fitting in a block \footnote{TODO: we should discuss if this is enough,
+      since a block might contain other data that contributes to its total
+      size}), and
   \item the proposed new script version can be incremented by at most 1.
   \end{itemize}
 \item must be new:
@@ -255,6 +261,9 @@ In Rule~\ref{eq:rule:up-validity} we see that a new proposal:
          & \wedge & (\var{maxBlockSize} \mapsto \var{bszm_{up}} \in (\upParams{up})\\
          & & \Rightarrow \var{maxBlockSize} \mapsto \var{bszm} \in \var{pps}
              \wedge  \var{bszm_{up}} \leq 2\var{bszm})\\
+         & \wedge & (\var{maxBlockSize} \mapsto \var{bszm_{up}} \in (\upParams{up})
+         \wedge \var{maxTxSize} \mapsto \var{txzm_{up}} \in (\upParams{up})\\
+         & & \Rightarrow \var{txzm_{up}} < \var{bszm_{up}})\\
          & \wedge & (\var{scriptVersion} \mapsto \var{sv_{up}} \in (\upParams{up}) \\
          & & \Rightarrow \var{scriptVersion} \mapsto \var{sv} \in \var{pps}
              \wedge  0 \leq \var{sv_{up}} - \var{sv} \leq 1)
