@@ -85,6 +85,7 @@ this specification can be extended to incorporate the research results.
   \emph{Derived types}
   \begin{equation*}
     \begin{array}{r@{~\in~}l@{~=~}r@{~\in~}lr}
+      \var{b_n} & \BkNr & n & \mathbb{N} & \text{block number}\\
       \var{pv} & \ProtVer & (\var{maj}, \var{min}, \var{alt})
       & (\mathbb{N}, \mathbb{N}, \mathbb{N}) & \text{protocol version}\\
       \var{pps} & \PPMMap & \var{pps} & \ProtPm \mapsto \Value
@@ -167,6 +168,8 @@ First we model the validity of a proposal.
       \begin{array}{r@{~\in~}lr}
         \var{pv} & \ProtVer & \text{adopted (current) protocol version}\\
         \var{pps} & \PPMMap & \text{adopted protocol parameters map}\\
+        \var{avs} & \ApName \mapsto (\mathbb{N} \times \BkNr)
+        & \text{application versions}\\
       \end{array}
     \right)
   \end{equation*}
@@ -178,6 +181,8 @@ First we model the validity of a proposal.
       \begin{array}{r@{~\in~}lr}
         \var{rups} & \UPropId \mapsto (\ProtVer \times \PPMMap)
         & \text{registered update proposals}\\
+        \var{raus} & \UPropId \mapsto (\ApName \times \mathbb{N})
+        & \text{registered software update proposals}\\
       \end{array}
     \right)
   \end{equation*}
@@ -528,22 +533,26 @@ In Rule~\ref{eq:rule:up-limits}:
         \var{pv} & \ProtVer & \text{adopted (current) protocol version}\\
         \var{pps} & \PPMMap & \text{adopted protocol parameters map}\\
         \var{e_c} & \Epoch & \text{current epoch}\\
+        \var{avs} & \ApName \mapsto (\mathbb{N} \times \BkNr)
+        & \text{application versions}\\
         \var{dms} & \VKeyGen \mapsto \VKey & \text{delegation map}\\
       \end{array}
     \right)
   \end{equation*}
   %
   \emph{Update proposals registration states}
-  \begin{equation*}
-    \UPRState
-    = \left(
+  \begin{align*}
+    & \UPRState = \\
+    & \left(
       \begin{array}{r@{~\in~}lr}
         \var{rups} & \UPropId \mapsto (\ProtVer \times \PPMMap)
         & \text{registered update proposals}\\
+        \var{raus} & \UPropId \mapsto (\ApName \times \mathbb{N})
+        & \text{registered software update proposals}\\
         \var{eps} & \powerset{(\Epoch \times \VKeyGen)} & \text{proposals per-epoch per-key}\\
       \end{array}
     \right)
-  \end{equation*}
+  \end{align*}
   %
   \emph{Update proposals registration transitions}
   \begin{equation*}
@@ -563,7 +572,8 @@ In Rule~\ref{eq:rule:up-limits}:
       {
         \begin{array}{l}
           \var{pv}\\
-          \var{pps}
+          \var{pps}\\
+          \var{avs}
         \end{array}
       }
       \vdash
@@ -571,6 +581,7 @@ In Rule~\ref{eq:rule:up-limits}:
         \left(
           \begin{array}{l}
             \var{rups}\\
+            \var{raus}\\
           \end{array}
         \right)
       }
@@ -579,6 +590,7 @@ In Rule~\ref{eq:rule:up-limits}:
         \left(
           \begin{array}{l}
             \var{rups'}\\
+            \var{raus'}\\
           \end{array}
         \right)
       }
@@ -611,6 +623,7 @@ In Rule~\ref{eq:rule:up-limits}:
           \var{pv}\\
           \var{pps}\\
           \var{e_c}\\
+          \var{avs}\\
           \var{dms}
         \end{array}
       }
@@ -619,6 +632,7 @@ In Rule~\ref{eq:rule:up-limits}:
         \left(
           \begin{array}{l}
             \var{rups}\\
+            \var{raus}\\
             \var{eps}
           \end{array}
         \right)
@@ -628,6 +642,7 @@ In Rule~\ref{eq:rule:up-limits}:
         \left(
           \begin{array}{l}
             \var{rups'}\\
+            \var{raus'}\\
             \var{eps'}
           \end{array}
         \right)
@@ -649,14 +664,6 @@ In Rule~\ref{eq:rule:up-limits}:
   \begin{equation*}
     \begin{array}{r@{~\in~}lr}
       \var{v} & \Vote & \text{vote on an update proposal}
-    \end{array}
-  \end{equation*}
-  %
-  \emph{Derived types}
-  %
-  \begin{equation*}
-    \begin{array}{r@{~\in~}l@{~=~}r@{~\in~}lr}
-      \var{b_n} & \BkNr & n & \mathbb{N} & \text{block number}
     \end{array}
   \end{equation*}
   %
@@ -1012,15 +1019,18 @@ rule by $\var{bv}$:
   Figure we take $k = 2$.
 \end{itemize}
 
-\begin{equation}
-  \label{eq:predicate:canadopt}
-  \begin{array}{r c l}
-    \fun{canAdopt}~\var{pps}~\var{bvs}~\var{bv}
-    & =
-    & \var{upAdptThd} \mapsto t \in pps \wedge
-    t \leq \size{\{\var{bv}\} \restrictdom \var{bvs}}\\
-  \end{array}
-\end{equation}
+\begin{figure}[htb]
+  \begin{equation}
+    \label{eq:predicate:canadopt}
+    \begin{array}{r c l}
+      \fun{canAdopt}~\var{pps}~\var{bvs}~\var{bv}
+      & =
+      & \var{upAdptThd} \mapsto t \in pps \wedge
+        t \leq \size{\{\var{bv}\} \restrictdom \var{bvs}}\\
+    \end{array}
+  \end{equation}
+  \caption{Update-proposal endorsement functions}
+\end{figure}
 
 \begin{figure}[htb]
   \begin{equation}
@@ -1269,7 +1279,8 @@ rule by $\var{bv}$:
     \pgfmathsetmacro{\eend}{7}
 
     % Draw the horizontal line
-    \draw[thick, -Triangle] (0,0) -- (\nrSlots,0) node[font=\scriptsize,below left=3pt and -8pt]{slots};
+    \draw[thick, -Triangle] (0,0) -- (\nrSlots,0)
+    node[font=\scriptsize,below left=3pt and -8pt]{slots};
 
     % % draw vertical lines
     \foreach \x in {0,1,...,10}

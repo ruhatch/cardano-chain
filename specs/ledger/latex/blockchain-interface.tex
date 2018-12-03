@@ -420,7 +420,7 @@ updated.
 \clearpage
 
 The interface rule for protocol-block-version registration makes use of the
-$\trans{upbvreg}{}$ transition, passing only the portion of the state relevant
+$\trans{upend}{}$ transition, passing only the portion of the state relevant
 to it. In addition, the unconfirmed proposals that are older than $u$ blocks
 are removed from the parts of the state that hold:
 \begin{itemize}
@@ -469,7 +469,7 @@ the end on an epoch.
           \end{array}
         \right)
       }
-      \trans{upbvreg}{(\var{bv}, \var{vk})}
+      \trans{upend}{(\var{bv}, \var{vk})}
       {
         \left(
           \begin{array}{l}
