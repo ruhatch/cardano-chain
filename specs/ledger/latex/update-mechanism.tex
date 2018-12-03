@@ -1,10 +1,9 @@
 \newcommand{\UProp}{\ensuremath{\type{UProp}}}
-\newcommand{\UPropId}{\ensuremath{\type{UPropId}}}
-\newcommand{\UPropSD}{\ensuremath{\type{UPropSD}}}
+\newcommand{\UPropId}{\ensuremath{\type{UpId}}}
+\newcommand{\UPropSD}{\ensuremath{\type{UpSD}}}
 \newcommand{\ProtVer}{\ensuremath{\type{ProtVer}}}
 \newcommand{\ProtPm}{\ensuremath{\type{Ppm}}}
 \newcommand{\PPMMap}{\ensuremath{\type{PpmMap}}}
-\newcommand{\Rups}{\ensuremath{\type{Rups}}}
 \newcommand{\UPVEnv}{\ensuremath{\type{UPVEnv}}}
 \newcommand{\UPVState}{\ensuremath{\type{UPVState}}}
 \newcommand{\UPLEnv}{\ensuremath{\type{UPLEnv}}}
@@ -939,10 +938,6 @@ blocks. Some clarifications are in order:
 \item The $k$ parameter is used to determined when a confirmed proposal is
   stable. Given we are in a current block $b_n$, all update proposals confirmed
   at or before block $b_n - k$ are deemed stable.
-\item The type $\Rups$ is equal to
-  $\UPropId \mapsto (\ProtVer \times \PPMMap)$, we use this local
-  definition to be able to fit the description of the environment in the page
-  width.
 \item For the sake of conciseness, we omit the types associated to the
   transitions $\trans{addbvvk}{}$, since they can be inferred from the types of
   the $\trans{upend}{}$ transitions.
@@ -960,7 +955,7 @@ blocks. Some clarifications are in order:
                              & \text{current protocol parameters map}\\
         \var{dms} & \VKeyGen \mapsto \VKey & \text{delegation map}\\
         \var{cps} & \UPropId \mapsto \BkNr & \text{confirmed proposals}\\
-        \var{rups} & \Rups
+        \var{rups} & \UPropId \mapsto (\ProtVer \times \PPMMap)
                              & \text{registered update proposals}\\
       \end{array}\right)
   \end{align*}
@@ -1011,7 +1006,7 @@ rule by $\var{bv}$:
   confirmation. Note that this rule does not guarantee that a confirmed
   proposal will have $k$ blocks (or $2k$ blocks) before the end of the epoch
   where nodes can endorse this version. In such case, the proposal can only be
-  adopted in the next epoch. Figure~\ref{fig:proposal-confirmed-too-late} shows
+  adopted in the next epoch. Figure~\ref{fig:up-confirmed-too-late} shows
   an example of a proposal being confirmed too late in an epoch, where it is
   not possible to get the enough endorsements in the remaining window. In this
   Figure we take $k = 2$.
@@ -1325,8 +1320,8 @@ rule by $\var{bv}$:
     \draw[->] (\eend, -4pt) -- +(1, -1)
     node[right, blue, font=\scriptsize] {End of epoch};
   \end{tikzpicture}
-  \caption{A proposal confirmed too late}
-  \label{fig:proposal-confirmed-too-late}
+  \caption{An update proposal confirmed too late}
+  \label{fig:up-confirmed-too-late}
 \end{figure}
 
 \clearpage
