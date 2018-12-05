@@ -4,7 +4,6 @@ module Types
   , Interf
   , BC
   , BlockIx(..)
-  , Slot(..)
   , ProtParams(..)
   , Block(..)
   )
@@ -13,7 +12,7 @@ where
 import Data.Set (Set)
 import Numeric.Natural
 
-import Ledger.Core (VKey, Sig)
+import Ledger.Core (VKey, Sig, Slot)
 import Ledger.Delegation (VKeyGen)
 import Ledger.Signatures (Hash)
 
@@ -28,8 +27,6 @@ data Interf
 
 -- | Phantom type for the blockchain extension transition system
 data BC
-
-newtype Slot = MkSlot Natural deriving (Eq, Ord)
 
 newtype BlockIx = MkBlockIx Natural deriving (Eq, Ord)
 

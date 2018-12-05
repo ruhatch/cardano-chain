@@ -18,14 +18,13 @@ import Control.State.Transition
 import Data.Queue
 import Delegation.Interface
   (DSIState, delegates, maybeMapKeyForValue, mapKeyForValue, initDSIState, newCertsRule, updateCerts)
-import Ledger.Core (VKey(..), verify)
+import Ledger.Core (VKey(..), Slot(..), verify)
 import Ledger.Delegation (VKeyGen(..))
 import Ledger.Signatures (Hash)
 import Types
   ( HCert
   , Interf
   , BC
-  , Slot
   , Block(..)
   , BlockIx(..)
   , ProtParams(..)

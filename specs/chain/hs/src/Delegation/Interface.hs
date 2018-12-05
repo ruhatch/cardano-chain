@@ -16,7 +16,7 @@ import Control.State.Transition
 import Data.Maybe (fromJust, listToMaybe)
 import qualified Data.Map.Strict as Map
 import Data.Set (Set)
-import Ledger.Core (VKey)
+import Ledger.Core (VKey, Slot)
 import Ledger.Delegation (VKeyGen)
 import Types
 
