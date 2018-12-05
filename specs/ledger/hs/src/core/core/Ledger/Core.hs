@@ -44,12 +44,21 @@ verify (VKey vk) vd (Sig sd sk) = vk == sk && vd == sd
 ---------------------------------------------------------------------------------
 
 newtype Epoch = Epoch Natural
+  deriving (Eq, Ord, Show)
 
 
 newtype Slot = Slot Natural
+  deriving (Eq, Ord, Show)
 
 -- | A number of slots.
 --
 --   We use this newtype to distinguish between a cardinal slot and a relative
 --   period of slots.
 newtype SlotCount = SlotCount Natural
+  deriving (Eq, Ord, Show)
+
+-- | Add a slot count to a slot.
+addSlot :: Slot
+        -> SlotCount
+        -> Slot
+addSlot (Slot n) (SlotCount m) = Slot $ m + n
