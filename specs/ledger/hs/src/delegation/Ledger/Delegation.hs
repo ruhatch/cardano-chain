@@ -13,7 +13,7 @@ import Data.Map.Strict (Map)
 --------------------------------------------------------------------------------
 
 -- | A genesis key is a specialisation of a generic VKey.
-newtype VKeyGen = VKeyGen VKey
+newtype VKeyGen = VKeyGen VKey deriving (Eq, Ord)
 
 
 data DCert = DCert

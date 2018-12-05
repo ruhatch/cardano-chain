@@ -5,25 +5,24 @@
 module Chain.Blockchain where
 
 import Control.Lens
-import Control.State.Transition
 import qualified Data.Map.Strict as Map
 import Data.Bits (shift)
-import Data.Queue
 import Data.Set (Set)
 import Numeric.Natural
 
 import Crypto.Hash (hashlazy)
 import Data.ByteString.Lazy.Char8 (pack)
-import UTxO (Hash)
 
 import Chain.GenesisBlock (genesisBlock)
+import Control.State.Transition
+import Data.Queue
 import Delegation.Interface
-  (DSIState, delegates, initDSIState, newCertsRule, updateCerts)
+  (DSIState, delegates, maybeMapKeyForValue, mapKeyForValue, initDSIState, newCertsRule, updateCerts)
+import Ledger.Core (VKey(..), verify)
+import Ledger.Delegation (VKeyGen(..))
+import Ledger.Signatures (Hash)
 import Types
-  ( VKey
-  , Sig
-  , Data
-  , HCert
+  ( HCert
   , Interf
   , BC
   , Slot
@@ -54,13 +53,9 @@ newtype K = MkK Natural deriving (Eq, Ord)
 -- block sliding window of size K
 newtype T = MkT Double deriving (Eq, Ord)
 
--- | Checks whether the signature of data is valid
-verify :: VKey -> Data -> Sig -> Bool
-verify = undefined
-
 -- Gives a map from delegator keys to a queue of block IDs of blocks that
 -- the given key (indirectly) signed in the block sliding window of size K
-type KeyToQMap = Map.Map VKey (Queue BlockIx)
+type KeyToQMap = Map.Map VKeyGen (Queue BlockIx)
 
 
 instance STS Interf where
@@ -79,7 +74,7 @@ instance STS Interf where
 trimIx :: KeyToQMap -> K -> BlockIx -> KeyToQMap
 trimIx m (MkK k) ix = foldl (flip f) m (Map.keysSet m)
  where
-  f :: VKey -> KeyToQMap -> KeyToQMap
+  f :: VKeyGen -> KeyToQMap -> KeyToQMap
   f = Map.adjust (qRestrict ix)
   qRestrict :: BlockIx -> Queue BlockIx -> Queue BlockIx
   qRestrict (MkBlockIx ix') q = case headQueue q of
@@ -88,7 +83,7 @@ trimIx m (MkK k) ix = foldl (flip f) m (Map.keysSet m)
 
 -- | Updates a map of genesis verification keys to their signed blocks in
 -- a sliding window by adding a block index to a specified key's list
-incIxMap :: BlockIx -> VKey -> KeyToQMap -> KeyToQMap
+incIxMap :: BlockIx -> VKeyGen -> KeyToQMap -> KeyToQMap
 incIxMap ix = Map.adjust (pushQueue ix)
 
 -- | Environment for blockchain rules
@@ -110,7 +105,7 @@ extendChain jc =
     (m , p, ds)             = st
     vk_d                    = rbSigner b
     ix                      = rbIx b
-    vk_s                    = delegates ds Map.! vk_d
+    vk_s                    = mapKeyForValue vk_d . delegates $ ds
     m'                      = incIxMap ix vk_s (trimIx m k ix)
     ds'                     = updateCerts sl (rbCerts b) ds
   in (m', p', ds')
@@ -192,7 +187,7 @@ instance STS BC where
         let
           (_, (_, _, ds), b@(RBlock {})) = jc
           vk_d = rbSigner b
-         in case Map.lookup vk_d (delegates ds) of
+         in case maybeMapKeyForValue vk_d (delegates ds) of
               Nothing -> Failed NoDelegationRight
               _       -> Passed
       -- valid signature
@@ -214,7 +209,7 @@ instance STS BC where
           ((MkK k), (MkT t)) = (bcEnvK env, bcEnvT env)
           vk_d = rbSigner b
           dsm = delegates ds
-        in case Map.lookup vk_d dsm of
+        in case maybeMapKeyForValue vk_d dsm of
           Nothing   -> Failed NoDelegationRight
           Just vk_s ->
             if fromIntegral (sizeQueue (m Map.! vk_s)) <= (fromIntegral k) * t

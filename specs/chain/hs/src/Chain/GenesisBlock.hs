@@ -8,10 +8,11 @@ where
 import Crypto.Hash (hashlazy)
 import Data.ByteString.Lazy.Char8 (pack)
 import Data.Set (Set)
+import Ledger.Delegation (VKeyGen)
 import Types
 
 -- | Verification keys located in the genesis block
-initVKeys :: Set VKey
+initVKeys :: Set VKeyGen
 initVKeys = undefined -- TODO(md): this is to be imported or implemented
 
 genesisBlock :: Block
