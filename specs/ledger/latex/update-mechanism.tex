@@ -74,10 +74,10 @@ this specification can be extended to incorporate the research results.
   %
   \begin{equation*}
     \begin{array}{r@{~\in~}lr}
-      \var{up} & \UProp & \text{(protocol) update proposal}\\
-      \var{p} & \ProtPm & \text{protocol parameters}\\
+      \var{up} & \UProp & \text{update proposal}\\
+      \var{p} & \ProtPm & \text{protocol parameter}\\
       \var{upd} & \type{UpdData} & \text{update data}\\
-      \var{upa} & \type{UpdAttr} & \text{update attributes}\\
+      \var{upa} & \type{UpdAttrs} & \text{update attributes}\\
       \var{an} & \ApName & \text{application name}
     \end{array}
   \end{equation*}
@@ -109,7 +109,7 @@ this specification can be extended to incorporate the research results.
           \PPMMap\\
           \type{SWVer}\\
           \type{UpdData}\\
-          \type{UpdAttr}\\
+          \type{UpdAttrs}\\
         \end{array}
                    \right)
                    }
@@ -120,13 +120,13 @@ this specification can be extended to incorporate the research results.
   %
   \begin{equation*}
     \begin{array}{r@{~\in~}lr}
-      \fun{upIssuer} & \UProp \to \VKeyGen & \text{issuer of the update proposal}\\
+      \fun{upIssuer} & \UProp \to \VKeyGen & \text{update proposal issuer}\\
       \fun{upSize} & \UProp \to \mathbb{N} & \text{update proposal size}\\
       \fun{upPV} & \UProp \to \ProtVer & \text{update proposal protocol version}\\
       \fun{upId} & \UProp \to \UPropId & \text{update proposal id}\\
       \fun{upParams} & \UProp \to \mathbb{\PPMMap}
-                                           & \text{new parameters that are proposed}\\
-      \fun{upSwVer} & \UProp \to \SWVer & \text{software version-update proposal}\\
+                                           & \text{proposed parameters update}\\
+      \fun{upSwVer} & \UProp \to \SWVer & \text{software-version update proposal}\\
       \fun{upSig} & \UProp \to \Sig & \text{update proposal signature}\\
       \fun{upSigdata} & \UProp \to \UPropSD & \text{update proposal signed data}\\
     \end{array}
@@ -135,7 +135,7 @@ this specification can be extended to incorporate the research results.
   \label{fig:defs:update-proposals}
 \end{figure}
 
-The set of protocol parameters is assumed to contain the following keys, which
+The set of protocol parameters ($\ProtPm$) is assumed to contain the following keys, which
 correspond with fields of the current `BlockVersionData` structure:
 \begin{itemize}
 \item Slot duration: $\var{slotDuration}$
@@ -181,7 +181,7 @@ First we model the validity of a proposal.
     = \left(
       \begin{array}{r@{~\in~}lr}
         \var{rups} & \UPropId \mapsto (\ProtVer \times \PPMMap)
-        & \text{registered update proposals}\\
+        & \text{registered protocol update proposals}\\
         \var{raus} & \UPropId \mapsto (\ApName \times \mathbb{N})
         & \text{registered software update proposals}\\
       \end{array}
@@ -283,7 +283,7 @@ In Rule~\ref{eq:rule:up-validity} we see that a new proposal:
   \begin{equation}
     \label{eq:func:av-can-follow}
     \begin{array}{r c l}
-      \fun{avCanFollow}~\var{avs}~(\var{an}, \var{av}) & =
+      \fun{svCanFollow}~\var{avs}~(\var{an}, \var{av}) & =
       & (\var{an} \mapsto (\var{av_c}, \wcard) \in \var{avs}
         \Rightarrow 0 \leq \var{av} - \var{av_c} \leq 1)\\
       & \vee & (\var{an} \notin \dom~\var{avs} \Rightarrow \var{av} = 0)
@@ -298,7 +298,7 @@ In Rule~\ref{eq:rule:up-validity} we see that a new proposal:
     \inference
     {
       (\var{an}, \var{av}) = \upSwVer{up}
-      & \fun{avCanFollow}~\var{avs}~(\var{an}, \var{av})
+      & \fun{svCanFollow}~\var{avs}~(\var{an}, \var{av})
       & (\var{an}, \var{av}) \notin \range~\var{raus}
     }
     {
@@ -908,6 +908,7 @@ The rules in Figure~\ref{fig:rules:up-vote-reg} model the registration of a vote
       \var{pid} = \vPropId{v}
       & \var{cfmThd} \mapsto t \in \var{pps}
       & t \leq \size{\{\var{pid}\} \restrictdom \var{vts'}}
+      & \var{pid} \notin \dom~\var{cps}
     }
     {
       {
@@ -1020,7 +1021,7 @@ rule by $\var{bv}$:
   proposal (which are contained in $\var{rups}$), and this update proposal must
   have been confirmed at least $k$ blocks ago, to ensure stability of the
   confirmation. Note that this rule does not guarantee that a confirmed
-  proposal will have $k$ blocks (or $2k$ blocks) before the end of the epoch
+  proposal will have $k$ blocks (or $2k$ slots) before the end of the epoch
   where nodes can endorse this version. In such case, the proposal can only be
   adopted in the next epoch. Figure~\ref{fig:up-confirmed-too-late} shows
   an example of a proposal being confirmed too late in an epoch, where it is
@@ -1337,6 +1338,10 @@ rule by $\var{bv}$:
 
     \draw[blue, line width=2pt] (\eend, 3pt) -- (\eend, -3pt);
 
+    \draw[<-] (\cSlot, 4pt) -- +(-1, 1)
+    node [above=2pt, black, font=\scriptsize]
+    {Proposal with id $\var{pid}$ gets confirmed};
+
     \draw[->] (\eend, -4pt) -- +(1, -1)
     node[right, blue, font=\scriptsize] {End of epoch};
   \end{tikzpicture}
@@ -1387,16 +1392,12 @@ complex check (which depends on state) to determine if a proposed version can
 follow the current one. By being more lenient on the alternative versions of
 update proposals we can simplify the version checking logic considerably.
 
-\subsubsection{Cleanup}
-\label{sec:up-cleanup}
+\subsubsection{No implicit agreement}
+\label{sec:no-implicit-agreement}
 
-Update proposals that are older than $u$ blocks w.r.t. the current block are
-discarded from the state, along with their associated information. The current
-implementation makes use of the implicit agreement rule and the epoch boundary
-checks: this leads to plenty of different states for a proposal: active,
-adopted, confirmed, competing, never-to-become-adopted, rejected, discarded. If
-the cleanup of proposals can be done in the way specified here we will avoid a
-great deal of cognitive complexity when reasoning about the update system.
+We do not model the implicit agreement rule. If a proposal does not get enough
+votes before the end of the voting period, then we simply discard it. At the
+moment it is not clear whether the implicit agreement rule is needed.
 
 \subsubsection{Adoption threshold}
 \label{sec:adoption-threshold}
@@ -1435,25 +1436,10 @@ Ouroboros-BFT logic in the software.
 It is unclear at this moment whether we need to model the applications names
 and versions, so this aspect is not modeled in the present rules.
 
-\subsubsection{No model of software-version}
-\label{sec:no-model-software-version}
-
-We do not model the
-\href{https://github.com/input-output-hk/cardano-sl/blob/develop/docs/block-processing/us.md#software-version}{application
-  name and the software version} of this application. It remains to be seen
-whether this is part of the scope of this specification.
-
-
-\subsubsection{Protocol-only vs software updates}
-\label{sec:protocol-vs-software-updates}
-
-We do not distinguish between protocol or software updates. The ledger only
-cares about the mechanisms by which the protocol parameters are changed.
-
 \subsubsection{Ignored attributes of proposals}
 
 In Figure~\ref{fig:defs:update-proposals} the types
-$\type{UpdData}$, and $\type{UpdAttr}$ are only needed to model the fact that
+$\type{UpdData}$, and $\type{UpdAttrs}$ are only needed to model the fact that
 an update proposal must sign such data, however, we do not use them for any
 other purpose in this formalization.
 

@@ -163,10 +163,10 @@ Figure~\ref{fig:ts-types:upi} defines the types of the transition systems
 related with the update-proposals interface. The acronyms in the transition
 labels have the following meaning:
 \begin{description}
-\item[UPIREG] Update-proposal registration.
-\item[UPIVOTE] Update-proposal vote.
-\item[UPIEND] Update-proposal endorsement.
-\item[UPIEC] Update-proposal epoch-change.
+\item[UPIREG] Update-proposal-interface registration.
+\item[UPIVOTE] Update-proposal-interface vote.
+\item[UPIEND] Update-proposal-interface endorsement.
+\item[UPIEC] Update-proposal-interface epoch-change.
 \end{description}
 
 \begin{figure}[htb]
@@ -196,7 +196,7 @@ labels have the following meaning:
         \var{avs} & \ApName \mapsto (\mathbb{N} \times \BkNr)
         & \text{application versions}\\
         \var{rups} & \UPropId \mapsto (\ProtVer \times \PPMMap)
-        & \text{registered update proposals}\\
+        & \text{registered protocol update proposals}\\
         \var{raus} & \UPropId \mapsto (\ApName \times \mathbb{N})
         & \text{registered software update proposals}\\
         \var{eps} & \powerset{(\Epoch \times \VKeyGen)}
@@ -361,8 +361,8 @@ updated.
         \right)
       }\\
       \var{avs_{new}} = \{ \var{an} \mapsto (\var{av}, \var{b_n})
-      \mid \var{pid} \mapsto (\var{an}, \var{av}) \in \var{raups}
-      ,~ \var{pid} \in \dom~\var{cps}
+      \mid \var{pid} \mapsto (\var{an}, \var{av}) \in \var{raus}
+      ,~ \var{pid} \in \dom~\var{cps'}
       \}
     }
     {
@@ -432,7 +432,7 @@ Figure~\ref{fig:st-diagram-pt-up}.
 \begin{figure}[ht]
   \centering
   \begin{tikzpicture}[ align = center
-                     , node distance = 6em and 10em
+                     , node distance = 6em and 12em
                      , text width = 5em
                      , font = \footnotesize
                      , >={Latex[width=0.5em, length=0.5em]}
@@ -445,12 +445,12 @@ Figure~\ref{fig:st-diagram-pt-up}.
 
   \node (active) [fill = blue!10] {Active};
   \node (rejected) [below = of active, fill = red!10] {Rejected};
-  \node (confirmed) [right = of active, fill = green!10] {Confirmed};
+  \node (confirmed) [right = of active, fill = green!30] {Confirmed};
 
-  \tikzset{every node/.style={align=center, text width=7em, text=brown}}
+  \tikzset{every node/.style={align=center, text width=10em, text=brown}}
 
   \draw[->] (active)
-  edge node [above] {Update proposal gets enough votes}
+  edge node [above] {Software Update proposal\\ gets enough votes}
   (confirmed);
 
   \draw[->] (active)
@@ -465,12 +465,12 @@ Figure~\ref{fig:st-diagram-pt-up}.
 
 \clearpage
 
-The interface rule for protocol-block-version registration makes use of the
+The interface rule for protocol-version endorsement makes use of the
 $\trans{upend}{}$ transition, passing only the portion of the state relevant
 to it. In addition, the unconfirmed proposals that are older than $u$ blocks
 are removed from the parts of the state that hold:
 \begin{itemize}
-\item the registered proposals,
+\item the registered protocol and software update proposals,
 \item the votes associated with the proposals,
 \item the set of endorsement-key pairs, and
 \item the block number in which proposals where added.
@@ -769,10 +769,10 @@ proposal can be in, and what causes the transitions between them.
   \node (confirmed) [right = of active, fill = green!10] {Confirmed};
   \node (adopted) [below = of confirmed, fill = green!30] {Adopted};
 
-  \tikzset{every node/.style={align=center, text width=7em, text=brown}}
+  \tikzset{every node/.style={align=center, text width=10em, text=brown}}
 
   \draw[->] (active)
-  edge node [above] {Update proposal gets enough votes}
+  edge node [above] {Protocol update proposal\\ gets enough votes}
   (confirmed);
 
   \draw[->] (active)
