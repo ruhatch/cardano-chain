@@ -1,5 +1,8 @@
+{-# LANGUAGE FlexibleInstances      #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Ledger.Delegation where
 
 import Control.Lens
@@ -40,30 +43,49 @@ makeLenses ''DCert
 
 -- | Delegation scheduling environment
 data DSEnv = DSEnv
-  { _dseAllowedDelegators :: Set VKeyGen
-  , _dseEpoch :: Epoch
-  , _dseSlot :: Slot
-  , _dseLiveness :: SlotCount
+  { _dSEnvAllowedDelegators :: Set VKeyGen
+  , _dSEnvEpoch :: Epoch
+  , _dSEnvSlot :: Slot
+  , _dSEnvLiveness :: SlotCount
   }
 
-makeLenses ''DSEnv
+makeFields ''DSEnv
 
 -- | Delegation scheduling state
 data DSState = DSState
-  { _dssScheduledDelegations :: [(Slot, (VKeyGen, VKey))]
-  , _dssKeyEpochDelegations :: Set (Epoch, VKeyGen)
+  { _dSStateScheduledDelegations :: [(Slot, (VKeyGen, VKey))]
+  , _dSStateKeyEpochDelegations :: Set (Epoch, VKeyGen)
   }
 
-makeLenses ''DSState
+makeFields ''DSState
 
 -- | Delegation state
 data DState = DState
-  { _dsDelegationMap :: Map VKeyGen VKey
+  { _dSStateDelegationMap :: Map VKeyGen VKey
     -- | When was the last time each genesis key delegated.
-  , _dsLastDelegation :: Map VKeyGen Slot
+  , _dSStateLastDelegation :: Map VKeyGen Slot
   }
 
-makeLenses ''DState
+makeFields ''DState
+
+data DIEnv = DIEnv
+  { _dIEnvAllowedDelegators :: Set VKeyGen
+  , _dIEnvEpoch :: Epoch
+  , _dIEnvSlot :: Slot
+  , _dIEnvLiveness :: SlotCount
+
+  }
+
+makeFields ''DIEnv
+
+data DIState = DIState
+  { _dIStateDelegationMap :: Map VKeyGen VKey
+  , _dIStateLastDelegation :: Map VKeyGen Slot
+  , _dIStateScheduledDelegations :: [(Slot, (VKeyGen, VKey))]
+  , _dIStateKeyEpochDelegations :: Set (Epoch, VKeyGen)
+  }
+
+makeFields ''DIState
 
 --------------------------------------------------------------------------------
 -- Transition systems
@@ -93,10 +115,10 @@ instance STS SDELEG where
       ]
       ( Extension . Transition $
         \(env, st, cert) -> st
-          & dssScheduledDelegations <>~ [( ((env ^. dseSlot) `addSlot` (env ^. dseLiveness))
+          & scheduledDelegations <>~ [( ((env ^. slot) `addSlot` (env ^. liveness))
                                          , cert ^. dwho
                                         )]
-          & dssKeyEpochDelegations %~ (Set.insert (env ^. dseEpoch, cert ^. dwho . _1))
+          & keyEpochDelegations %~ (Set.insert (env ^. epoch, cert ^. dwho . _1))
       )
     ]
     where
@@ -105,27 +127,27 @@ instance STS SDELEG where
       -- Check that this delegator hasn't already delegated this epoch
       notAlreadyDelegated :: DSState -> DCert -> PredicateResult SDELEG
       notAlreadyDelegated st cert =
-        if Set.member (cert ^. depoch, cert ^. dwho . _1) (st ^. dssKeyEpochDelegations)
+        if Set.member (cert ^. depoch, cert ^. dwho . _1) (st ^. keyEpochDelegations)
         then Failed HasAlreadyDelegated
         else Passed
       -- Check that there is not already a scheduled delegation from this key
       notAlreadyScheduled :: DSEnv -> DSState -> DCert -> PredicateResult SDELEG
       notAlreadyScheduled env st cert =
         if List.elem
-            (((env ^. dseSlot) `addSlot` (env ^. dseLiveness)), cert ^. dwho ^. _1)
-            (st ^. dssScheduledDelegations . to (fmap $ fmap fst))
+            (((env ^. slot) `addSlot` (env ^. liveness)), cert ^. dwho ^. _1)
+            (st ^. scheduledDelegations . to (fmap $ fmap fst))
         then Failed IsAlreadyScheduled
         else Passed
       -- Verify that the delegator is allowed to do so by virtue of being a
       -- genesis key.
       isGenesisKey :: DSEnv -> DCert -> PredicateResult SDELEG
       isGenesisKey env cert =
-        if Set.member (cert ^. dwho . _1) (env ^. dseAllowedDelegators)
+        if Set.member (cert ^. dwho . _1) (env ^. allowedDelegators)
         then Passed
         else Failed IsNotGenesisKey
       -- Check that the delegation is for a future epoch
       isFutureEpoch :: DSEnv -> DCert -> PredicateResult SDELEG
       isFutureEpoch env cert =
-        if env ^. dseEpoch <= cert ^. depoch
+        if env ^. epoch <= cert ^. depoch
         then Passed
         else Failed IsPastEpoch
