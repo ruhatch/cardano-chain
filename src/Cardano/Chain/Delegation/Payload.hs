@@ -20,6 +20,7 @@ where
 import Cardano.Prelude
 
 import Control.Monad.Except (MonadError, liftEither)
+import Data.List (nub)
 import Formatting (bprint, int, stext)
 import Formatting.Buildable (Buildable(..))
 
@@ -32,15 +33,19 @@ import Cardano.Binary.Class
   , annotatedDecoder
   , decodeListWith
   )
-import Cardano.Chain.Delegation.HeavyDlgIndex (AProxySKHeavy, ProxySKHeavy)
+import qualified Cardano.Chain.Delegation.Certificate as Delegation
 import Cardano.Crypto
-  (ProtocolMagic, decodeAProxySecretKey, validateProxySecretKey)
+  ( ProtocolMagic
+  , decodeAProxySecretKey
+  , validateProxySecretKey
+  , AProxySecretKey(..)
+  )
 
 
 -- | 'Payload' is put into 'MainBlock' and is a set of heavyweight proxy signing
 --   keys. List of psk issuers should be unique also.
 data APayload a = UnsafeAPayload
-  { getPayload    :: [AProxySKHeavy a]
+  { getPayload    :: [Delegation.ACertificate a]
   , getAnnotation :: a
   } deriving (Show, Eq, Generic, Functor)
 
@@ -48,7 +53,7 @@ instance (NFData a) => NFData (APayload a) where
 
 type Payload = APayload ()
 
-unsafePayload :: [ProxySKHeavy] -> Payload
+unsafePayload :: [Delegation.Certificate] -> Payload
 unsafePayload sks = UnsafeAPayload sks ()
 
 instance Decoded (APayload ByteString) where
@@ -70,20 +75,26 @@ decodeAPayload = do
   (Annotated p a) <- annotatedDecoder (decodeListWith decodeAProxySecretKey)
   pure (UnsafeAPayload p a)
 
-data PayloadError = PayloadPSKError Text
+data PayloadError
+  = PayloadDuplicateIssuer
+  | PayloadPSKError Text
 
 instance Buildable PayloadError where
   build = \case
+    PayloadDuplicateIssuer -> bprint
+      "Encountered multiple delegation certificates from the same issuer."
     PayloadPSKError err -> bprint
-      ( "ProxySecretKey invalid when checing Delegation.Payload.\n Error: "
+      ( "ProxySecretKey invalid when checking Delegation.Payload.\n Error: "
       . stext
       )
       err
 
 checkPayload
   :: MonadError PayloadError m => ProtocolMagic -> APayload ByteString -> m ()
-checkPayload protocolMagic payload = forM_
-  (getPayload payload)
-  (liftEither . first PayloadPSKError . validateProxySecretKey protocolMagic)
-  -- unless (allDistinct $ map pskIssuerPk proxySKs) $
-  --     throwError "Some of block's PSKs have the same issuer, which is prohibited"
+checkPayload protocolMagic (UnsafeAPayload payload _) = do
+  let issuers = pskIssuerPk <$> payload
+  (length issuers == length (nub issuers)) `orThrowError` PayloadDuplicateIssuer
+
+  forM_
+    payload
+    (liftEither . first PayloadPSKError . validateProxySecretKey protocolMagic)

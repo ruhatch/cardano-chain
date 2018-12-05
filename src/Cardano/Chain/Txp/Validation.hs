@@ -18,7 +18,7 @@ where
 import Cardano.Prelude
 
 
-import Control.Monad.Except (MonadError, liftEither)
+import Control.Monad.Except (MonadError)
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import qualified Data.Vector as V
@@ -63,14 +63,6 @@ data TxValidationError
   deriving (Eq, Show)
 
 
--- | A helper for lifting an 'Either' to a 'MonadError'
---
---   By using this function infix we can move the error handling to the end of
---   an expression, hopefully improving readability.
-wrapError :: MonadError e' m => Either e a -> (e -> e') -> m a
-wrapError m wrapper = liftEither $ first wrapper m
-
-
 -- | Validate that:
 --
 --   1. All @TxIn@s are in domain of @Utxo@
@@ -104,7 +96,7 @@ validateTx feePolicy utxo tx = do
     `wrapError` TxValidationLovelaceError "Fee"
 
   -- Check that the fee is greater than the minimum
-  unless (minFee <= fee) (throwError $ TxValidationFeeTooSmall tx minFee fee)
+  (minFee <= fee) `orThrowError` TxValidationFeeTooSmall tx minFee fee
  where
 
   txSize    = biSize tx
@@ -139,26 +131,25 @@ validateWitness
   -> m ()
 validateWitness pm sigData addr witness = case witness of
 
-  PkWitness pk sig -> unless
+  PkWitness pk sig ->
     (  verifySignatureDecoded pm SignTx pk sigData sig
-    && checkPubKeyAddress pk addr
-    )
-    (throwError $ TxValidationInvalidWitness witness)
+      && checkPubKeyAddress pk addr
+      )
+      `orThrowError` TxValidationInvalidWitness witness
 
-  RedeemWitness pk sig -> unless
+  RedeemWitness pk sig ->
     (  verifyRedeemSigDecoded pm SignRedeemTx pk sigData sig
-    && checkRedeemAddress pk addr
-    )
-    (throwError $ TxValidationInvalidWitness witness)
+      && checkRedeemAddress pk addr
+      )
+      `orThrowError` TxValidationInvalidWitness witness
 
   -- TODO: Support script witnesses for Shelley
   ScriptWitness validator redeemer -> do
     let
       valVersion = scrVersion validator
       redVersion = scrVersion redeemer
-    unless
-      (valVersion == redVersion && checkScriptAddress validator addr)
-      (throwError $ TxValidationInvalidWitness witness)
+    (valVersion == redVersion && checkScriptAddress validator addr)
+      `orThrowError` TxValidationInvalidWitness witness
     txScriptCheck sigData validator redeemer
 
   UnknownWitnessType t _ -> throwError $ TxValidationUnknownWitnessType t
