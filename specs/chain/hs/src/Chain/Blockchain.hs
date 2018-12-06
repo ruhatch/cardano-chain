@@ -19,11 +19,10 @@ import Data.Queue
 import Delegation.Interface
   (DSIState, delegates, maybeMapKeyForValue, mapKeyForValue, initDSIState, newCertsRule, updateCerts)
 import Ledger.Core (VKey(..), Slot(..), verify)
-import Ledger.Delegation (VKeyGen(..))
+import Ledger.Delegation (DCert, VKeyGen)
 import Ledger.Signatures (Hash)
 import Types
-  ( HCert
-  , Interf
+  ( Interf
   , BC
   , Block(..)
   , BlockIx(..)
@@ -59,7 +58,7 @@ type KeyToQMap = Map.Map VKeyGen (Queue BlockIx)
 
 instance STS Interf where
   type State Interf = DSIState
-  type Signal Interf = Set HCert
+  type Signal Interf = Set DCert
   type Environment Interf = Slot
   data PredicateFailure Interf
     = ConflictWithExistingCerts

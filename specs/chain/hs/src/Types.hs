@@ -1,7 +1,6 @@
 -- | Defines basic types for working with the ledger and the blockchain
 module Types
-  ( HCert
-  , Interf
+  ( Interf
   , BC
   , BlockIx(..)
   , ProtParams(..)
@@ -13,13 +12,8 @@ import Data.Set (Set)
 import Numeric.Natural
 
 import Ledger.Core (VKey, Sig, Slot)
-import Ledger.Delegation (VKeyGen)
+import Ledger.Delegation (DCert, VKeyGen)
 import Ledger.Signatures (Hash)
-
-
--- TODO: to be implemented
--- | A heavyweight delegation certificate
-data HCert
 
 
 -- | Phantom type for the delegation interface transition system
@@ -48,7 +42,7 @@ data Block
       rbHash   :: Hash -- ^ Hash of the predecessor block
     , rbIx     :: BlockIx -- ^ Index of the block
     , rbSigner :: VKey -- ^ Block signer
-    , rbCerts  :: Set HCert -- ^ New certificates posted to the blockchain
+    , rbCerts  :: Set DCert -- ^ New certificates posted to the blockchain
     , rbSl     :: Slot -- ^ Slot in which the block was issued
     , rbData   :: Hash -- ^ Body of the block
       -- NOTE(md): rbData shouldn't be of type Hash, but some sensible type.

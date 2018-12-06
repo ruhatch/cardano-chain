@@ -17,7 +17,7 @@ import Data.Maybe (fromJust, listToMaybe)
 import qualified Data.Map.Strict as Map
 import Data.Set (Set)
 import Ledger.Core (VKey, Slot)
-import Ledger.Delegation (VKeyGen)
+import Ledger.Delegation (DCert, VKeyGen)
 import Types
 
 
@@ -58,5 +58,5 @@ newCertsRule = undefined
 -- | Updates the delegation interface state with a set of heavyweight
 -- delegation certificates that arrived in a block issued in the given
 -- slot
-updateCerts :: Slot -> Set HCert -> DSIState -> DSIState
+updateCerts :: Slot -> Set DCert -> DSIState -> DSIState
 updateCerts = undefined
