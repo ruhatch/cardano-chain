@@ -2,6 +2,10 @@ module Ledger.Core where
 
 import Ledger.Signatures
 import Numeric.Natural (Natural)
+import Data.Map.Strict (Map)
+import Data.Set (Set)
+import qualified Data.Set as Set
+import qualified Data.Map.Strict as Map
 
 -- | Hash part of the ledger paylod
 class HasHash a where
@@ -62,3 +66,17 @@ addSlot :: Slot
         -> SlotCount
         -> Slot
 addSlot (Slot n) (SlotCount m) = Slot $ m + n
+
+---------------------------------------------------------------------------------
+-- Domain restriction and exclusion
+---------------------------------------------------------------------------------
+
+-- |Domain restriction
+--
+(◁) :: Ord a => Set a -> Map a b -> Map a b
+s ◁ r = Map.filterWithKey (\k _ -> k `Set.member` s) r
+
+-- |Domain exclusion
+--
+(⋪) :: Ord a => Set a -> Map a b -> Map a b
+s ⋪ r = Map.filterWithKey (\k _ -> k `Set.notMember` s) r

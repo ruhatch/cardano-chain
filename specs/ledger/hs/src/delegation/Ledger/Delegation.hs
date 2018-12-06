@@ -91,7 +91,7 @@ makeFields ''DIState
 -- Transition systems
 --------------------------------------------------------------------------------
 
--- | Delegation schdeuling rules
+-- | Delegation scheduling rules
 data SDELEG
 
 instance STS SDELEG where
@@ -151,3 +151,17 @@ instance STS SDELEG where
         if env ^. epoch <= cert ^. depoch
         then Passed
         else Failed IsPastEpoch
+
+-- | Delegation rules
+data ADELEG
+
+instance STS ADELEG where
+  type State ADELEG = DState
+  type Signal ADELEG = (Slot, (VKeyGen, VKey))
+  type Environment ADELEG = ()
+
+  data PredicateFailure ADELEG
+    = Foo
+    deriving (Eq, Show)
+
+  rules = []
