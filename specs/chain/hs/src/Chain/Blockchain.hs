@@ -17,9 +17,9 @@ import Chain.GenesisBlock (genesisBlock)
 import Control.State.Transition
 import Data.Queue
 import Delegation.Interface
-  (DSIState, delegates, maybeMapKeyForValue, mapKeyForValue, initDSIState, newCertsRule, updateCerts)
+  (delegates, maybeMapKeyForValue, mapKeyForValue, initDIState, newCertsRule, updateCerts)
 import Ledger.Core (VKey(..), Slot, SlotCount(SlotCount), verify)
-import Ledger.Delegation (DCert, VKeyGen)
+import Ledger.Delegation (DCert, DIState, VKeyGen)
 import Ledger.Signatures (Hash)
 import Types
   ( Interf
@@ -54,7 +54,7 @@ type KeyToQMap = Map.Map VKeyGen (Queue BlockIx)
 
 
 instance STS Interf where
-  type State Interf = DSIState
+  type State Interf = DIState
   type Signal Interf = Set DCert
   type Environment Interf = Slot
   data PredicateFailure Interf
@@ -109,7 +109,7 @@ instance STS BC where
   -- | The state comprises a map of genesis block verification keys to a queue
   -- of at most K blocks each key signed in a sliding window of size K,
   -- the previous block and the delegation interface state
-  type State BC = (KeyToQMap, Block, DSIState)
+  type State BC = (KeyToQMap, Block, DIState)
   -- | Transitions in the system are triggered by a new block
   type Signal BC = Block
   -- | The environment consists of K and t parameters. To support a state
@@ -146,7 +146,7 @@ instance STS BC where
     where
       initStateRule :: Rule BC
       initStateRule =
-        Rule [] $ Base (Map.empty, genesisBlock, initDSIState)
+        Rule [] $ Base (Map.empty, genesisBlock, initDIState)
       -- valid predecessor
       validPredecessor :: Antecedent BC
       validPredecessor = Predicate $ \jc ->
