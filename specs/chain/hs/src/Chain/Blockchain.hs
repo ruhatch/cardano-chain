@@ -18,7 +18,7 @@ import Control.State.Transition
 import Data.Queue
 import Delegation.Interface
   (DSIState, delegates, maybeMapKeyForValue, mapKeyForValue, initDSIState, newCertsRule, updateCerts)
-import Ledger.Core (VKey(..), Slot(..), verify)
+import Ledger.Core (VKey(..), Slot, SlotCount(SlotCount), verify)
 import Ledger.Delegation (DCert, VKeyGen)
 import Ledger.Signatures (Hash)
 import Types
@@ -43,9 +43,6 @@ bSize = undefined
 bHeaderSize :: Block -> Natural
 bHeaderSize = undefined
 
--- | Size of the block sliding window
-newtype K = MkK Natural deriving (Eq, Ord)
-
 -- | The 't' parameter in K * t in the range 0.2 <= t <= 0.25
 -- that limits the number of blocks a signer can signed in a
 -- block sliding window of size K
@@ -69,8 +66,8 @@ instance STS Interf where
 
 -- | Remove the oldest entry in the queues in the range of the map if it is
 --   more than *K* blocks away from the given block index
-trimIx :: KeyToQMap -> K -> BlockIx -> KeyToQMap
-trimIx m (MkK k) ix = foldl (flip f) m (Map.keysSet m)
+trimIx :: KeyToQMap -> SlotCount -> BlockIx -> KeyToQMap
+trimIx m (SlotCount k) ix = foldl (flip f) m (Map.keysSet m)
  where
   f :: VKeyGen -> KeyToQMap -> KeyToQMap
   f = Map.adjust (qRestrict ix)
@@ -89,7 +86,7 @@ data BlockchainEnv = MkBlockChainEnv
   {
     bcEnvPp :: ProtParams
   , bcEnvSl :: Slot
-  , bcEnvK :: K
+  , bcEnvK :: SlotCount
   , bcEnvT :: T
   }
 
@@ -204,7 +201,7 @@ instance STS BC where
         let
           (env, st, b@(RBlock {})) = jc
           (m, _, ds) = st
-          ((MkK k), (MkT t)) = (bcEnvK env, bcEnvT env)
+          ((SlotCount k), (MkT t)) = (bcEnvK env, bcEnvT env)
           vk_d = rbSigner b
           dsm = delegates ds
         in case maybeMapKeyForValue vk_d dsm of
